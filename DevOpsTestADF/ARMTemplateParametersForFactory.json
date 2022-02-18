@@ -1,0 +1,18 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "DevOpsTestADF"
+		},
+		"linkedService1_secretAccessKey": {
+			"value": ""
+		},
+		"linkedService2_connectionString": {
+			"value": ""
+		},
+		"linkedService1_properties_typeProperties_accessKeyId": {
+			"value": "AKIAU6TLHKA7L3J7OZW4"
+		}
+	}
+}
