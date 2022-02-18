@@ -66,8 +66,11 @@
 								"referenceName": "BinaryDataSource_Folder",
 								"type": "DatasetReference",
 								"parameters": {
-									"Bucket": "FILE",
-									"Directory": "DIRECTORY"
+									"Bucket": "devopstest1811",
+									"Directory": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									}
 								}
 							}
 						],
@@ -76,9 +79,15 @@
 								"referenceName": "BinaryDataDestination",
 								"type": "DatasetReference",
 								"parameters": {
-									"Container": "FOLDER",
-									"Directory": "FOLDER",
-									"filename": "file"
+									"Container": "datafromaws",
+									"Directory": {
+										"value": "@pipeline().Pipeline",
+										"type": "Expression"
+									},
+									"filename": {
+										"value": "@pipeline().RunId",
+										"type": "Expression"
+									}
 								}
 							}
 						]
