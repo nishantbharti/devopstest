@@ -1,0 +1,9 @@
+{
+	"name": "DevOpsTestADF",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "febc56c3-c391-4fac-8bd8-73faadd051c0",
+		"tenantId": "8922bfca-c16b-426c-8170-e29a18e9e5e1"
+	}
+}
