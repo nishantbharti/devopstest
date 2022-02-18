@@ -1,0 +1,90 @@
+Once you convert JSON string to an object with PowerShell, it's not really a problem to then change the properties. The main issue you are going to face here is that your string is currently invalid JSON for .Net or at least it won't be expecting it in the current format. We can fix that though.
+
+Here is your current JSON.
+
+"JWTToken": {
+    "SecretKey": "Security Key For Generate Token",
+    "Issuer": "ABC Company"
+},
+"AllowedHosts": "*",
+"ModulesConfiguration": {
+    "AppModules": [ "ABC Modules" ]
+},
+"ConnectionStrings": {
+    "DatabaseConnection": "Server=testserver,1433;Database=TestDatabase;User Id=code-developer;password=xyz;Trusted_Connection=False;MultipleActiveResultSets=true;",
+    "TableStorageConnection": "etc",
+    "BlobStorageConnection": "etc"
+},
+There may be other issues, for PowerShell JSON, in your application.config file, but these two are immediately noticeable to me.
+
+Unnecessary trailing commas
+No definitive opening { and closing }
+How Can We Fix This?
+We can use simple string concatenation to add { and } where necessary.
+
+$RawText = Get-Content -Path .\path_to\application.config -Raw
+$RawText = "{ " + $RawText + " }"
+To remove any unnecessary parsing issues with trailing commas when parsing the JSON with ConvertFrom-Json we need to remove them via regex. My proposed approach would be to identify them by whether the current array } or ] closes after them, it might be that these closing brackets have a number of spaces or \s before they appear. So we would have a regex that looks like this:
+
+"\,(?=\s*?[\}\]])".
+
+We could then use that with -replace in PowerShell. Of course we will replace them with an empty string.
+
+$FormattedText = $RawText -replace "\,(?=\s*?[\}\]])",""
+From here we convert to JSON.
+
+$JsonObj = $FormattedText | ConvertFrom-Json
+We can now change your database string by setting a property.
+
+$JsonObj.ConnectionStrings.DatabaseConnection = "your new string"
+We use ConvertTo-Json to convert the array back to a Json string.
+
+$JsonString = $JsonObj | ConvertTo-Json
+It's not important to return the trailing commas, they aren't valid JSON, but your file needs the first { and last } removing before we commit it back to file with Set-Content.
+
+# Remove the first { and trim white space. Second TrimStart() clears the space.
+$JsonString = $JsonString.TrimStart("{").TrimStart()
+
+# Repeat this but for the final } and use TrimEnd().
+$JsonString = $JsonString.TrimEnd("}").TrimEnd()
+
+# Write back to file.
+$JsonString | Set-Content -Path .\path_to\application.config -Force
+Your config file should be written back more or less as you found it. I will try and think of a regex to fix the appearance of the formatting, it shouldn't error, it just doesn't look great. Hope that helps.
+
+EDIT
+Here is a function to fix the unsightly appearance of the text in the file.
+
+function  Restore-Formatting {
+    Param (
+        [parameter(Mandatory=$true,ValueFromPipeline=$true)][string]$InputObject
+    )  
+    $JsonArray = $InputObject -split "\n"
+    $Tab = 0
+    $Output = @()
+    foreach ($Line in $JsonArray) {
+        if ($Line -match "{" -or $Line -match "\[") { 
+            $Output += (" " * $Tab) + $Line.TrimStart()
+            $Tab += 4 
+        }
+        elseif ($Line -match "^\s+}" -or $Line -match "^\s+\]") {
+            $Tab -= 4
+            $Output += (" " * $Tab) + $Line.TrimStart()
+        }
+        else {
+            $Output += (" " * $Tab) + $Line.TrimStart()
+        }
+    }
+    $Output
+}
+TL;DR Script:
+
+$RawText = Get-Content -Path .\path_to\application.config -Raw
+$RawText = "{ " + $RawText + " }"
+$FormattedText = $RawText -replace "\,(?=\s*?[\}\]])",""
+$JsonObj = $FormattedText | ConvertFrom-Json
+$JsonObj.ConnectionStrings.DatabaseConnection = "your new string"
+$JsonString = $JsonObj | ConvertTo-Json
+$JsonString = $JsonString.TrimStart("{").TrimStart()
+$JsonString = $JsonString.TrimEnd("}").TrimEnd()
+$JsonString | Restore-Formatting | Set-Content -Path .\path_to\application.config -NoNewLin
