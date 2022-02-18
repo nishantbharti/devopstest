@@ -172,12 +172,84 @@
 						"folderPath": {
 							"value": "@{dataset().Directory}",
 							"type": "Expression"
-						}
+						},
+						"fileName": "id_check.xlsx"
 					}
 				}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/linkedService1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/CopyFiles')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "BinarySource",
+								"storeSettings": {
+									"type": "AmazonS3ReadSettings",
+									"recursive": true
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							},
+							"sink": {
+								"type": "BinarySink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "BinaryDataSource_Folder",
+								"type": "DatasetReference",
+								"parameters": {
+									"Bucket": "FILE",
+									"Directory": "DIRECTORY"
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "BinaryDataDestination",
+								"type": "DatasetReference",
+								"parameters": {
+									"Container": "FOLDER",
+									"Directory": "FOLDER",
+									"filename": "file"
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/BinaryDataSource_Folder')]",
+				"[concat(variables('factoryId'), '/datasets/BinaryDataDestination')]"
 			]
 		},
 		{
